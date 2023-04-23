@@ -1,4 +1,4 @@
-from modules.bot import LOGGER
+from IGDB import LOGGER
 
 
 def list_all_modules():
