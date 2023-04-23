@@ -1,7 +1,7 @@
 import telegram
 from telegram.ext import  CommandHandler
 import requests
-from IGMD import dp
+from IGDB import dp
 
 client_id= "8kc80zi43ry7ov5f6pyx9rg067c9zb"
 access_token= "4063beydegyr3e2gpm62cls6m77u0x"
