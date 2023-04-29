@@ -90,7 +90,7 @@ async def game_command(client: Client, message: Message):
 **Rating:** `{rating}`
 **Genres:** `{', '.join(genre['name'] for genre in genres)}`
 [­]({image_url})
-**Storyline:** {storyline[:300]}
+**Storyline:** {storyline[:300]}...
 
 **Summary:** __{summary[:300]}....[Read more]({url})__
 
