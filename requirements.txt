@@ -1,3 +1,3 @@
-python-telegram-bot==20.0
+pyrogram==2.0.104
 requests
 python-dotenv
