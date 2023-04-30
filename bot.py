@@ -90,7 +90,7 @@ async def game_command(client: Client, message: Message):
 **ID:** `{game_id}`
 **Game:** `{game_name}`
 **Rating:** `{rating}`
-**Game Modes:** `{', '.join(mode['name'] for mode in modes)}`
+**Game Modes:** `{', '.join(mode['name'] for mode in modes if 'name' in mode)}`
 **Genres:** `{', '.join(genre['name'] for genre in genres if 'name' in genre)}`
 **Platforms:** `{', '.join(platform['name'] for platform in platforms if 'name' in platform)}`
 [­]({image_url})
