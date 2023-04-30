@@ -41,7 +41,7 @@ def search(query: str) -> dict:
         "Client-ID": client_id,
         "Authorization": f"Bearer {access_token}"
     }
-    data = f"search \"{query}\"; fields name,url,genres.name,summary,websites.category,websites.url,cover.url,cover.image_id,storyline,first_release_date,rating,artworks;"
+    data = f"search \"{query}\"; fields name,url,genres.name,summary,platforms.name,websites.category,websites.url,cover.url,cover.image_id,game_modes.name,storyline,first_release_date,rating,artworks;"
     response = requests.post(url, headers=headers, data=data)
     print(response.status_code)
     games = response.json()
@@ -63,7 +63,9 @@ async def game_command(client: Client, message: Message):
     game_id = result.get("id", "N/A")
     genres = result.get("genres", "N/A")
     storyline = result.get("storyline", "N/A")
+    platforms = result.get("platforms", "N/A")
     game_name = result["name"]
+    game_modes = result.get("game_modes", "N/A")
     websites = result.get("websites", "N/A")
     if websites:
         websites = [website for website in websites if "category" in website and website["category"] == 13]
@@ -88,7 +90,9 @@ async def game_command(client: Client, message: Message):
 **ID:** `{game_id}`
 **Game:** `{game_name}`
 **Rating:** `{rating}`
+**Game Modes:** `{', '.join(mode['name'] for mode in game_modes)}`
 **Genres:** `{', '.join(genre['name'] for genre in genres)}`
+**Platforms:** `{', '.join(platform['name'] for platform in platforms)}`
 [­]({image_url})
 **Storyline:** {storyline[:300]}...
 
