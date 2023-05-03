@@ -41,7 +41,7 @@ def search(query: str) -> dict:
         "Client-ID": client_id,
         "Authorization": f"Bearer {access_token}"
     }
-    data = f"search \"{query}\"; fields name,url,genres.name,summary,platforms.name,websites.category,websites.url,cover.url,cover.image_id,game_modes.name,storyline,first_release_date,rating;"
+    data = f"search \"{query}\"; fields name,url,genres.name,release_date.y,summary,platforms.name,websites.category,websites.url,cover.url,cover.image_id,game_modes.name,storyline,first_release_date,rating;"
     response = requests.post(url, headers=headers, data=data)
     print(response.status_code)
     games = response.json()
