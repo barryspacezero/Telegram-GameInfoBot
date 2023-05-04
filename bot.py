@@ -182,6 +182,36 @@ async def character_command(client :Client, message: Message):
 """
     await message.reply(text)
 
+#function to get top 20 games list with their ratings
+def get_top_games() -> dict:
+    url = f"https://api.igdb.com/v4/games"
+    headers = {
+        "Client-ID": client_id,
+        "Authorization": f"Bearer {access_token}"
+    }
+    data = f"fields name,rating; sort rating desc;where rating > 90;where rating_count > 400;"
+    response = requests.post(url, headers=headers, data=data)
+    games = response.json()
+    print(json.dumps(games, indent=4, sort_keys=True))
+    return games
+
+#function to get top 20 games list with their ratings to telegram from the json file
+@bot.on_message(filters.command("top"))
+async def top_command(client: Client, message: Message):
+    result = get_top_games()
+    if not result:
+        await message.reply("No games found")
+        return
+    text = ""
+    for game in result:
+        name = game["name"]
+        rating = game.get("rating")
+        if rating:
+            rating = int(rating)
+        else:
+            rating = ('No rating found')
+        text += "• " + f"{name} - `{rating}`\n"
+    await message.reply(text)
 
 if __name__ == "__main__":
     bot.run()
