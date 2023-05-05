@@ -213,8 +213,8 @@ async def top_command(client: Client, message: Message):
         text += "• " + f"{name} - `{rating}`\n"
     await message.reply(text)
 
-#function to get screenshots of a game from IGDB API
-def get_screenshots(game: str) -> dict:
+#function to get artworks of a game from IGDB API
+def get_art(game: str) -> dict:
     url = f"https://api.igdb.com/v4/games"
     headers = {
         "Client-ID": client_id,
@@ -222,18 +222,18 @@ def get_screenshots(game: str) -> dict:
     }
     data = f"fields name,artworks.image_id; search \"{game}\"; limit 1;"
     response = requests.post(url, headers=headers, data=data)
-    screenshots = response.json()
-    print(json.dumps(screenshots, indent=4, sort_keys=True))
-    return screenshots
+    art = response.json()
+    print(json.dumps(art, indent=4, sort_keys=True))
+    return art
 
-#function to get screenshots of a game to telegram from the json file
+#function to get artworks of a game to telegram from the json file
 @bot.on_message(filters.command("art"))
-async def screenshot_command(client: Client, message: Message):
+async def art_command(client: Client, message: Message):
     if len(message.text.split()) <= 1:
         await message.reply("You gotta enter a game name!")
         return
     game = message.text.split(maxsplit=1)[1]
-    result = get_screenshots(game)
+    result = get_art(game)
     if not result:
         await message.reply("No game found")
         return
@@ -245,6 +245,41 @@ async def screenshot_command(client: Client, message: Message):
         return
     artworks = random.choice(artworks)
     image_id = (artworks["image_id"])
+    image_url = f"https://images.igdb.com/igdb/image/upload/t_1080p/{image_id}.jpg"
+    await message.reply_photo(image_url, caption=f"**{name}**")
+
+#function to get screenshots of a game from IGDB API
+def get_screenshots(game: str) -> dict:
+    url = f"https://api.igdb.com/v4/games"
+    headers = {
+        "Client-ID": client_id,
+        "Authorization": f"Bearer {access_token}"
+    }
+    data = f"fields name,screenshots.image_id; search \"{game}\"; limit 1;"
+    response = requests.post(url, headers=headers, data=data)
+    screenshots = response.json()
+    print(json.dumps(screenshots, indent=4, sort_keys=True))
+    return screenshots
+
+#function to get screenshots of a game to telegram from the json file
+@bot.on_message(filters.command("ss"))
+async def screenshot_command(client: Client, message: Message):
+    if len(message.text.split()) <= 1:
+        await message.reply("You gotta enter a game name!")
+        return
+    game = message.text.split(maxsplit=1)[1]
+    result = get_screenshots(game)
+    if not result:
+        await message.reply("No game found")
+        return
+    result = result[0]
+    name = result["name"]
+    screenshot = result.get("screenshots")
+    if not screenshot:
+        await message.reply("No screenshots found")
+        return
+    screenshot = random.choice(screenshot)
+    image_id = (screenshot["image_id"])
     image_url = f"https://images.igdb.com/igdb/image/upload/t_1080p/{image_id}.jpg"
     await message.reply_photo(image_url, caption=f"**{name}**")
 
