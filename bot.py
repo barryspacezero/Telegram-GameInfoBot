@@ -245,7 +245,7 @@ async def screenshot_command(client: Client, message: Message):
         return
     artworks = random.choice(artworks)
     image_id = (artworks["image_id"])
-    image_url = f"https://images.igdb.com/igdb/image/upload/t_original/{image_id}.jpg"
+    image_url = f"https://images.igdb.com/igdb/image/upload/t_1080p/{image_id}.jpg"
     await message.reply_photo(image_url, caption=f"**{name}**")
 
 if __name__ == "__main__":
