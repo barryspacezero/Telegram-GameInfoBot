@@ -18,10 +18,6 @@ logging.getLogger("pyrogram").setLevel(logging.INFO)
 client_id= getenv("CLIENT_ID")
 access_token= getenv("CLIENT_TOKEN")
 
-# exclude a given user from the bot
-def exclude_user(user_id):
-    return user_id==getenv("EXCLUDE_USER")
-# 
 bot = Client(
     name='igdb_bot',
     api_id=getenv("API_ID"),
