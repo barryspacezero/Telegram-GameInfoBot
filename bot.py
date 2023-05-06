@@ -41,7 +41,7 @@ def search(query: str) -> dict:
         "Client-ID": client_id,
         "Authorization": f"Bearer {access_token}"
     }
-    data = f"search \"{query}\"; fields name,url,genres.name,summary,platforms.name,websites.category,websites.url,cover.url,cover.image_id,game_modes.name,storyline,first_release_date,rating;"
+    data = f"search \"{query}\"; fields name,url,genres.name,summary,platforms.name,websites.category,websites.url,cover.url,cover.image_id,game_modes.name,storyline,first_release_date,rating,franchises.name;"
     response = requests.post(url, headers=headers, data=data)
     print(response.status_code)
     games = response.json()
@@ -65,6 +65,7 @@ async def game_command(client: Client, message: Message):
     storyline = result.get("storyline", "N/A")
     platforms = result.get("platforms", "N/A")
     game_name = result["name"]
+    franchise = result.get("franchises", "N/A")
     modes = result.get("game_modes", "N/A")
     websites = result.get("websites", "N/A")
     if websites:
@@ -84,7 +85,7 @@ async def game_command(client: Client, message: Message):
     url = result["url"]
     image_url = None
     if cover_id:
-        image_url = f"https://images.igdb.com/igdb/image/upload/t_720p_2x/{cover_id['image_id']}.jpg"
+        image_url = f"https://images.igdb.com/igdb/image/upload/t_1080p_2x/{cover_id['image_id']}.jpg"
         print(image_url)
     text = f"""
 **ID:** `{game_id}`
@@ -92,6 +93,7 @@ async def game_command(client: Client, message: Message):
 **Rating:** `{rating}`
 **Game Modes:** `{', '.join(mode['name'] for mode in modes if 'name' in mode)}`
 **Genres:** `{', '.join(genre['name'] for genre in genres if 'name' in genre)}`
+**Franchise:** `{', '.join(franch['name'] for franch in franchise if 'name' in franch)}`
 **Platforms:** `{', '.join(platform['name'] for platform in platforms if 'name' in platform)}`
 [­]({image_url})
 **Storyline:** {storyline[:300]}...
@@ -245,7 +247,7 @@ async def art_command(client: Client, message: Message):
         return
     artworks = random.choice(artworks)
     image_id = (artworks["image_id"])
-    image_url = f"https://images.igdb.com/igdb/image/upload/t_1080p/{image_id}.jpg"
+    image_url = f"https://images.igdb.com/igdb/image/upload/t_720p_2x/{image_id}.jpg"
     await message.reply_photo(image_url, caption=f"**{name}**")
 
 #function to get screenshots of a game from IGDB API
@@ -280,7 +282,7 @@ async def screenshot_command(client: Client, message: Message):
         return
     screenshot = random.choice(screenshot)
     image_id = (screenshot["image_id"])
-    image_url = f"https://images.igdb.com/igdb/image/upload/t_1080p/{image_id}.jpg"
+    image_url = f"https://images.igdb.com/igdb/image/upload/t_720p_2x/{image_id}.jpg"
     await message.reply_photo(image_url, caption=f"**{name}**")
 
 if __name__ == "__main__":
