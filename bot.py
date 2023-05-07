@@ -67,9 +67,9 @@ async def game_command(client: Client, message: Message):
     modes = result.get("game_modes", "N/A")
     websites = result.get("websites", "N/A")
     if websites:
-        websites = [website for website in websites if "category" in website and website["category"] == 13 or website["category"] == 15]
+        websites = [website for website in websites if website["category"] == 13 or website["category"] == 15]
     else :
-        websites = None
+        websites = []
     summary = result.get("summary", "N/A")
     rating = result.get("rating")
     if rating:
@@ -104,7 +104,7 @@ async def game_command(client: Client, message: Message):
     buttons = InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton(text="Steam/Itch.io Link", url = websites[0]["url"] if websites else websites[1]["url"] if len(websites) > 1 else None),
+                InlineKeyboardButton(text="Steam/Itch.io link", url=websites[0]["url"] if websites else websites[1]["url"] if len(websites) > 1 else None),
             ]
         ]
     )
