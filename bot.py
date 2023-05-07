@@ -71,6 +71,11 @@ async def game_command(client: Client, message: Message):
         websites = [website for website in websites if "category" in website and website["category"] == 13]
     else :
         websites = None
+    website2 = result.get("websites", "N/A")
+    if website2:
+        website2 = [website2 for website2 in website2 if "category" in website2 and website2["category"] == 15]
+    else :
+        website2 = None
     summary = result.get("summary", "N/A")
     rating = result.get("rating")
     if rating:
@@ -110,9 +115,16 @@ async def game_command(client: Client, message: Message):
             ]
         ]
     )
+    buttons2 = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(text="Itch.io Link", url = website2[0]["url"] if website2 else "not available")
+            ]
+        ]
+    )
     
-    await message.reply(text, disable_web_page_preview=False, reply_markup=buttons if websites else None)
-
+    await message.reply(text, disable_web_page_preview=False, reply_markup=buttons if websites else buttons2 if website2 else None)
+    
 #function to make a request to IGDB API to get character info
 def search_characters(query: str) -> dict:
     url = f"https://api.igdb.com/v4/characters"
