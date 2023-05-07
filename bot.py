@@ -31,7 +31,7 @@ async def start_command(client: Client, message: Message):
 
 @bot.on_message(filters.command("help"))
 async def help_command(client: Client, message: Message):
-    await message.reply("Send /game `'game name'` to get info about a game.\nSend /character `'character name'` to get info about a character.")
+    await message.reply("Send /game `'game name'` to get info about a game.\nSend /character `'character name'` to get info about a character.\n Send /ss `'game name'` to get a screenshot of a game.\nSend /art `'game name'` to get an artwork of a game.\nSend `/top` to get the list of top rated games.")
 
 #function to get game info and save it in key-value pairs
 def search(query: str) -> dict:
