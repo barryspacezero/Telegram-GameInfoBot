@@ -65,17 +65,13 @@ async def game_command(client: Client, message: Message):
     platforms = result.get("platforms", "N/A")
     game_name = result["name"]
     franchise = result.get("franchises", "N/A")
+    franchise = franchise[0]['name'] if franchise else 'N/A'
     modes = result.get("game_modes", "N/A")
     websites = result.get("websites", "N/A")
     if websites:
-        websites = [website for website in websites if "category" in website and website["category"] == 13]
+        websites = [website for website in websites if "category" in website and website["category"] == 13 or website["category"] == 15]
     else :
         websites = None
-    website2 = result.get("websites", "N/A")
-    if website2:
-        website2 = [website2 for website2 in website2 if "category" in website2 and website2["category"] == 15]
-    else :
-        website2 = None
     summary = result.get("summary", "N/A")
     rating = result.get("rating")
     if rating:
@@ -97,7 +93,7 @@ async def game_command(client: Client, message: Message):
 **Rating:** `{rating}`
 **Game Modes:** `{', '.join(mode['name'] for mode in modes if 'name' in mode)}`
 **Genres:** `{', '.join(genre['name'] for genre in genres if 'name' in genre)}`
-**Franchise:** `{', '.join(franch['name'] for franch in franchise if 'name' in franch)}`
+**Franchise:** `{franchise}`
 **Platforms:** `{', '.join(platform['name'] for platform in platforms if 'name' in platform)}`
 [­]({image_url})
 **Storyline:** {storyline[:300]}...
@@ -111,19 +107,12 @@ async def game_command(client: Client, message: Message):
     buttons = InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton(text="Steam Link", url = websites[0]["url"] if websites else "not available")
-            ]
-        ]
-    )
-    buttons2 = InlineKeyboardMarkup(
-        [
-            [
-                InlineKeyboardButton(text="Itch.io Link", url = website2[0]["url"] if website2 else "not available")
+                InlineKeyboardButton(text="Steam/Itch.io Link", url = websites[0]["url"] if websites else websites[1]["url"] if len(websites) > 1 else None),
             ]
         ]
     )
     
-    await message.reply(text, disable_web_page_preview=False, reply_markup=buttons if websites else buttons2 if website2 else None)
+    await message.reply(text, disable_web_page_preview=False, reply_markup=buttons if websites else None)
     
 #function to make a request to IGDB API to get character info
 def search_characters(query: str) -> dict:
