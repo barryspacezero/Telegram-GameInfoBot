@@ -64,8 +64,6 @@ async def game_command(client: Client, message: Message):
     storyline = result.get("storyline", "N/A")
     platforms = result.get("platforms", "N/A")
     game_name = result["name"]
-    franchise = result.get("franchises", "N/A")
-    franchise = franchise[0]['name'] if franchise else 'N/A'
     modes = result.get("game_modes", "N/A")
     websites = result.get("websites", "N/A")
     if websites:
@@ -93,7 +91,6 @@ async def game_command(client: Client, message: Message):
 **Rating:** `{rating}`
 **Game Modes:** `{', '.join(mode['name'] for mode in modes if 'name' in mode)}`
 **Genres:** `{', '.join(genre['name'] for genre in genres if 'name' in genre)}`
-**Franchise:** `{franchise}`
 **Platforms:** `{', '.join(platform['name'] for platform in platforms if 'name' in platform)}`
 [­]({image_url})
 **Storyline:** {storyline[:300]}...
