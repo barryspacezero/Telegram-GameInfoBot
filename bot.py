@@ -104,7 +104,7 @@ async def game_command(client: Client, message: Message):
     buttons = InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton(text="Steam link", url=websites[0]["url"] if websites None),
+                InlineKeyboardButton("Steam Link", websites[0]["url"] if websites else None),
             ]
         ]
     )
