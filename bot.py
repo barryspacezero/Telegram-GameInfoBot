@@ -40,7 +40,7 @@ def search(query: str) -> dict:
         "Client-ID": client_id,
         "Authorization": f"Bearer {access_token}"
     }
-    data = f"search \"{query}\"; fields name,url,genres.name,summary,platforms.name,websites.category,websites.url,cover.url,cover.image_id,game_modes.name,storyline,first_release_date,rating,franchises.name;"
+    data = f"search \"{query}\"; fields name,url,genres.name,summary,platforms.name,websites.category,websites.url,cover.url,cover.image_id,game_modes.name,storyline,first_release_date,rating,franchises.name; limit 1;"
     response = requests.post(url, headers=headers, data=data)
     print(response.status_code)
     games = response.json()
@@ -65,11 +65,11 @@ async def game_command(client: Client, message: Message):
     platforms = result.get("platforms", "N/A")
     game_name = result["name"]
     modes = result.get("game_modes", "N/A")
-    websites = result.get("websites", "N/A")
-    if websites:
-        websites = [website for website in websites if website["category"] == 13]
-    else :
+    websites = result.get("websites")
+    if websites is None:
         websites = []
+    else:
+        websites = [website for website in websites if website["category"] == 13 or website["category"] == 15]
     summary = result.get("summary", "N/A")
     rating = result.get("rating")
     if rating:
@@ -83,7 +83,7 @@ async def game_command(client: Client, message: Message):
     url = result["url"]
     image_url = None
     if cover_id:
-        image_url = f"https://images.igdb.com/igdb/image/upload/t_1080p_2x/{cover_id['image_id']}.jpg"
+        image_url = f"https://images.igdb.com/igdb/image/upload/t_720p_2x/{cover_id['image_id']}.jpg"
         print(image_url)
     text = f"""
 **ID:** `{game_id}`
@@ -104,13 +104,14 @@ async def game_command(client: Client, message: Message):
     buttons = InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton("Steam Link", websites[0]["url"] if websites else None),
+                InlineKeyboardButton(text="Steam/Itch.io Link", url=websites[0]["url"] if websites else websites[1]["url"] if len(websites) > 1 else None),
             ]
         ]
     )
     
     await message.reply(text, disable_web_page_preview=False, reply_markup=buttons if websites else None)
     
+
 #function to make a request to IGDB API to get character info
 def search_characters(query: str) -> dict:
     url = f"https://api.igdb.com/v4/characters"
@@ -188,7 +189,7 @@ def get_top_games() -> dict:
         "Client-ID": client_id,
         "Authorization": f"Bearer {access_token}"
     }
-    data = f"fields name,rating; sort rating desc;where rating > 90;where rating_count > 400;"
+    data = f"fields name,rating; sort rating desc;where rating > 90;where rating_count > 420;limit 30;"
     response = requests.post(url, headers=headers, data=data)
     games = response.json()
     print(json.dumps(games, indent=4, sort_keys=True))
