@@ -40,7 +40,7 @@ def search(query: str) -> dict:
         "Client-ID": client_id,
         "Authorization": f"Bearer {access_token}"
     }
-    data = f"search \"{query}\"; fields name,url,genres.name,summary,platforms.name,websites.category,websites.url,cover.url,cover.image_id,game_modes.name,storyline,first_release_date,rating,franchises.name; limit 1;"
+    data = f"search \"{query}\"; fields name,url,similar_games.name,genres.name,summary,platforms.name,websites.category,websites.url,cover.url,cover.image_id,game_modes.name,storyline,first_release_date,rating,franchises.name; limit 1;"
     response = requests.post(url, headers=headers, data=data)
     print(response.status_code)
     games = response.json()
@@ -82,6 +82,7 @@ async def game_command(client: Client, message: Message):
     cover_id = result.get("cover")
     url = result["url"]
     image_url = None
+    similar_games = result.get("similar_games", "N/A")
     if cover_id:
         image_url = f"https://images.igdb.com/igdb/image/upload/t_720p_2x/{cover_id['image_id']}.jpg"
         print(image_url)
@@ -92,6 +93,8 @@ async def game_command(client: Client, message: Message):
 **Game Modes:** `{', '.join(mode['name'] for mode in modes if 'name' in mode)}`
 **Genres:** `{', '.join(genre['name'] for genre in genres if 'name' in genre)}`
 **Platforms:** `{', '.join(platform['name'] for platform in platforms if 'name' in platform)}`
+
+**Similar Games:** {', '.join(game['name'] for game in similar_games[:5] if 'name' in game)}
 [­]({image_url})
 **Storyline:** {storyline[:300]}...
 
@@ -111,7 +114,6 @@ async def game_command(client: Client, message: Message):
     
     await message.reply(text, disable_web_page_preview=False, reply_markup=buttons if websites else None)
     
-
 #function to make a request to IGDB API to get character info
 def search_characters(query: str) -> dict:
     url = f"https://api.igdb.com/v4/characters"
