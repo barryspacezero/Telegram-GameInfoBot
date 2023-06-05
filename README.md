@@ -45,7 +45,7 @@ python bot.py
 The bot will display information about the game, including title, rating, release date, cover image, and link to the Steam store page (if available).
 
 <a href="https://t.me/TheGameInfoBot" class="btn">Try the Game Info Bot now!</a>
-https://imgur.com/a/MX9pqQh
+<blockquote class="imgur-embed-pub" lang="en" data-id="a/MX9pqQh"  ><a href="//imgur.com/a/MX9pqQh">the bot ranked #2 in new arrivals on @BotsArchive Telegram Channel.</a></blockquote><script async src="//s.imgur.com/min/embed.js" charset="utf-8"></script>
 ## Credits
 <a href="https://t.me/barryspace" class="btn">@barryspace</a>
 <a href="https://t.me/EverythingSuckz" class="btn">@EverythingSuckz</a>
