@@ -46,6 +46,7 @@ The bot will display information about the game, including title, rating, releas
 
 <a href="https://t.me/TheGameInfoBot" class="btn">Try the Game Info Bot now!</a>
 
+![TheGameInfoBot ranked #2 in new arrivals on @BotArchieve](https://imgur.com/a/MX9pqQh)
 ## Credits
 <a href="https://t.me/barryspace" class="btn">@barryspace</a>
 <a href="https://t.me/EverythingSuckz" class="btn">@EverythingSuckz</a>
