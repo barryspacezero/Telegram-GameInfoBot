@@ -16,7 +16,7 @@ A Telegram bot that provides information about games using the IGDB API.
 
 ## How to Use
 
-1. Start the bot by searching for "@igdb_game_bot" on Telegram or by clicking [here](https://telegram.me/igdb_game_bot).
+1. Start the bot by searching for "@TheGameInfoBot" on Telegram or by clicking [here](https://t.me/TheGameIntoBot).
 2. Use the following commands to interact with the bot:
    - `/start`: Displays a welcome message and provides basic information about the bot.
    - `/help`: Provides a list of available commands and their usage instructions.
@@ -40,7 +40,11 @@ pip install -r requirements.txt
 ```
 
 3. Obtain the necessary credentials:
-- Register and create an application on the IGDB website to obtain the API credentials.
+- Register and create an application on the <a href="https://dev.twitch.tv/console/apps/create" class="btn">Twitch Dev Console</a> to obtain the Client ID and secret credentials.
+- Make a POST request to ```https://id.twitch.tv/oauth2/token``` with the following query string parameters, substituting your Client ID and Client Secret accordingly to get the Auth token.
+```client_id=Client ID```
+```client_secret=Client Secret```
+```grant_type=client_credentials```
 - Create a new Telegram bot and obtain the bot token.
 
 4. Set up the environment variables:
