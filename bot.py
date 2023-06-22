@@ -107,7 +107,7 @@ async def game_command(client: Client, message: Message):
     buttons = InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton(text="Steam Link", 
+                InlineKeyboardButton(text="Steam/Itch-io Link", 
                                     url=websites[0]["url"]
                                     if websites
                                     else websites[1]["url"] 
