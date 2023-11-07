@@ -128,8 +128,6 @@ async def game_command(client: Client, message: Message):
     if not result:
         await message.reply("No game found")
         return
-    global Database
-    Database[message.from_user.id] = result
     buttons = []
     for i in result:
         buttons.append([InlineKeyboardButton(
