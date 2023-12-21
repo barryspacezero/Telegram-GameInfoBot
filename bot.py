@@ -1,5 +1,5 @@
 from pyrogram import Client, filters
-from pyrogram.types import Message
+from pyrogram.types import Message,CallbackQuery
 import requests
 import json
 from datetime import datetime
@@ -25,6 +25,53 @@ bot = Client(
     bot_token=getenv("BOT_TOKEN")
 )
 
+#function to get someone else's user ID
+@bot.on_message(filters.command("id"))
+async def id_command(client: Client, message: Message):
+    if not message.reply_to_message:
+        await message.reply("Reply to a message to get the ID")
+        return
+    if not message.from_user.id == 1035576679:
+        return await message.reply_text("You are not my master!")
+    await message.reply_text(f"**User ID:** `{message.reply_to_message.from_user.id}`")
+
+
+def free()->list:
+    url=f"https://api.qewertyy.me/freegames"
+    response=requests.get(url)
+    if response.status_code != 200:  
+        print("failed to fetch data, Status code :", response.status_code)
+        return None
+    data = response.json()['content']
+    print(json.dumps(data,sort_keys=True, indent=2))
+    games = []
+    if len(data['epicGames']) > 0:
+        for game in data['epicGames']:
+            games.append(game)
+    if len(data['steam']) > 0:
+        for game in data['steam']:
+            games.append(game)
+    if len(data['standalone']) > 0:
+        for game in data['standalone']:
+            games.append(game)
+    return games
+
+@bot.on_message(filters.command("free"))
+async def free_command(client: Client, message: Message):
+    result = free()
+    if not result:
+        await message.reply("No free games found")
+        return
+    text = ""
+    buttons = []
+    for i in result:
+        buttons.append([InlineKeyboardButton(
+            text=i['name'],
+            url=i['url']
+        )])
+    await message.reply("Free Games:", disable_web_page_preview=True, reply_markup=InlineKeyboardMarkup(buttons))
+
+
 @bot.on_message(filters.command("start"))
 async def start_command(client: Client, message: Message):
     await message.reply("Hello, this bot can send game info and character info. Send /help to get more info.")
@@ -34,31 +81,27 @@ async def help_command(client: Client, message: Message):
     await message.reply("Send /game `'game name'` to get info about a game.\nSend /character `'character name'` to get info about a character.\n Send /ss `'game name'` to get a screenshot of a game.\nSend /art `'game name'` to get an artwork of a game.\nSend `/top` to get the list of top rated games.")
 
 #function to get game info and save it in key-value pairs
-def search(query: str) -> dict:
+def search(payload : str) -> dict:
     url = f"https://api.igdb.com/v4/games"
     headers = {
         "Client-ID": client_id,
         "Authorization": f"Bearer {access_token}"
     }
-    data = f"search \"{query}\"; fields name,url,similar_games.name,genres.name,summary,platforms.name,websites.category,websites.url,cover.url,cover.image_id,game_modes.name,storyline,first_release_date,rating,franchises.name; limit 1;"
-    response = requests.post(url, headers=headers, data=data)
+    response = requests.post(url, headers=headers, data=payload)
     print(response.status_code)
     games = response.json()
     print(json.dumps(games, indent=4, sort_keys=True))
     return games
 
-#function to get game info to telegram from the json file
-@bot.on_message(filters.command("game"))
-async def game_command(client: Client, message: Message):
-    if len(message.text.split()) <= 1:
-        await message.reply("You gotta enter a game name!")
-        return
-    game = message.text.split(maxsplit=1)[1]
-    result = search(game)
-    if not result:
-        await message.reply("No game found")
-        return
-    result = result[0]
+@bot.on_callback_query(filters.regex(r"^game.(.*?)"))
+async def gameInfo(client: Client,query: CallbackQuery):
+    data = query.data.split('.')
+    if int(data[-1]) != query.from_user.id:
+        return await query.answer("Not for you!",show_alert=True)
+    gameId = data[1]
+    payload = f"fields name,url,similar_games.name,genres.name,summary,platforms.name,websites.category,websites.url,cover.url,cover.image_id,game_modes.name,storyline,first_release_date,rating,franchises.name; where id={gameId};"
+    game = search(payload)
+    result = game[0]
     game_id = result.get("id", "N/A")
     genres = result.get("genres", "N/A")
     storyline = result.get("storyline", "N/A")
@@ -107,12 +150,38 @@ async def game_command(client: Client, message: Message):
     buttons = InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton(text="Steam/Itch.io Link", url=websites[0]["url"] if websites else websites[1]["url"] if len(websites) > 1 else None),
+                InlineKeyboardButton(text="Steam/Itch-io Link", 
+                                    url=websites[0]["url"]
+                                    if websites
+                                    else websites[1]["url"] 
+                                    if len(websites) > 1 
+                                    else None),
             ]
         ]
     )
     
-    await message.reply(text, disable_web_page_preview=False, reply_markup=buttons if websites else None)
+    await query.edit_message_text(text, disable_web_page_preview=False, reply_markup=buttons if websites else None)
+
+
+#function to get game info to telegram from the json file
+@bot.on_message(filters.command("game"))
+async def game_command(client: Client, message: Message):
+    if len(message.text.split()) <= 1:
+        await message.reply("You gotta enter a game name!")
+        return
+    game = message.text.split(maxsplit=1)[1]
+    data = f"search \"{game}\"; fields id,name; limit 5;"
+    result = search(data)
+    if not result:
+        await message.reply("No game found")
+        return
+    buttons = []
+    for i in result:
+        buttons.append([InlineKeyboardButton(
+            text=i['name'],
+            callback_data=f"game.{i['id']}.{message.from_user.id}"
+        )])
+    await message.reply("Games Found:", disable_web_page_preview=False, reply_markup=InlineKeyboardMarkup(buttons))
     
 #function to make a request to IGDB API to get character info
 def search_characters(query: str) -> dict:
