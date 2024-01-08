@@ -1,9 +1,8 @@
 from pyrogram import Client, filters
-from pyrogram.types import Message,CallbackQuery
+from pyrogram.types import Message,CallbackQuery,InlineKeyboardMarkup, InlineKeyboardButton, InputMediaPhoto
 import requests
 import json
 from datetime import datetime
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import random
 
 import dotenv
@@ -39,7 +38,7 @@ async def id_command(client: Client, message: Message):
 def free()->list:
     url=f"https://api.qewertyy.me/freegames"
     response=requests.get(url)
-    if response.status_code != 200:  
+    if response.status_code != 200:
         print("failed to fetch data, Status code :", response.status_code)
         return None
     data = response.json()['content']
@@ -144,22 +143,22 @@ async def gameInfo(client: Client,query: CallbackQuery):
 **Summary:** __{summary[:300]}....[Read more]({url})__
 
 
-**Release Date:** `{release_date}` 
+**Release Date:** `{release_date}`
 
         """
     buttons = InlineKeyboardMarkup(
         [
             [
-                InlineKeyboardButton(text="Steam/Itch-io Link", 
+                InlineKeyboardButton(text="Steam/Itch-io Link",
                                     url=websites[0]["url"]
                                     if websites
-                                    else websites[1]["url"] 
-                                    if len(websites) > 1 
+                                    else websites[1]["url"]
+                                    if len(websites) > 1
                                     else None),
             ]
         ]
     )
-    
+
     await query.edit_message_text(text, disable_web_page_preview=False, reply_markup=buttons if websites else None)
 
 
@@ -182,7 +181,7 @@ async def game_command(client: Client, message: Message):
             callback_data=f"game.{i['id']}.{message.from_user.id}"
         )])
     await message.reply("Games Found:", disable_web_page_preview=False, reply_markup=InlineKeyboardMarkup(buttons))
-    
+
 #function to make a request to IGDB API to get character info
 def search_characters(query: str) -> dict:
     url = f"https://api.igdb.com/v4/characters"
@@ -205,7 +204,7 @@ async def character_command(client :Client, message: Message):
     if len(message.text.split()) <= 1:
         await message.reply("You gotta enter a character name!")
         return
-    
+
     #get the character name from the message
     character = message.text.split(maxsplit=1)[1]
     result = search_characters(character)
@@ -241,7 +240,7 @@ async def character_command(client :Client, message: Message):
     elif gender == 2:
         gender = "Other"
 
-    
+
     text = f"""
 **Name:** {name}
 **Species:** {species}
@@ -320,17 +319,26 @@ async def art_command(client: Client, message: Message):
     await message.reply_photo(image_url, caption=f"**{name}**")
 
 #function to get screenshots of a game from IGDB API
-def get_screenshots(game: str) -> dict:
+def get_screenshots(payload: str) -> dict:
     url = f"https://api.igdb.com/v4/games"
     headers = {
         "Client-ID": client_id,
         "Authorization": f"Bearer {access_token}"
     }
-    data = f"fields name,screenshots.image_id; search \"{game}\"; limit 1;"
-    response = requests.post(url, headers=headers, data=data)
-    screenshots = response.json()
-    print(json.dumps(screenshots, indent=4, sort_keys=True))
-    return screenshots
+    response = requests.post(url, headers=headers, data=payload)
+    result = response.json()
+    print(json.dumps(result, indent=4, sort_keys=True))
+    games = []
+    for ss in result:
+        if "screenshots" in ss:
+            obj = {
+                    "id":ss['id'],
+                    "name":ss['name']
+                }
+            if "where" in payload:
+                obj['screenshots'] = [f"https://images.igdb.com/igdb/image/upload/t_720p_2x/{i['image_id']}.jpg" for i in ss['screenshots']]
+            games.append(obj)
+    return games
 
 #function to get screenshots of a game to telegram from the json file
 @bot.on_message(filters.command("ss"))
@@ -339,20 +347,44 @@ async def screenshot_command(client: Client, message: Message):
         await message.reply("You gotta enter a game name!")
         return
     game = message.text.split(maxsplit=1)[1]
-    result = get_screenshots(game)
-    if not result:
+    payload = f"fields name,screenshots.image_id; search \"{game}\"; limit 5;"
+    results = get_screenshots(payload)
+    if not results:
         await message.reply("No game found")
         return
-    result = result[0]
-    name = result["name"]
-    screenshot = result.get("screenshots")
-    if not screenshot:
-        await message.reply("No screenshots found")
-        return
-    screenshot = random.choice(screenshot)
-    image_id = (screenshot["image_id"])
-    image_url = f"https://images.igdb.com/igdb/image/upload/t_720p_2x/{image_id}.jpg"
-    await message.reply_photo(image_url, caption=f"**{name}**")
+    buttons = []
+    for i in results:
+        buttons.append([InlineKeyboardButton(
+            text=i['name'],
+            callback_data=f"ss.{i['id']}.{message.from_user.id}"
+        )])
+    await message.reply("Games Found:", disable_web_page_preview=False, reply_markup=InlineKeyboardMarkup(buttons))
+
+@bot.on_callback_query(filters.regex(r"^ss.(.*?)"))
+async def sendScreenshots(client: Client,query: CallbackQuery):
+    data = query.data.split('.')
+    if int(data[-1]) != query.from_user.id:
+        return await query.answer("Not for you!",show_alert=True)
+    gameId = data[1]
+    payload = f"fields id,name,screenshots.image_id; where id={gameId};"
+    game = get_screenshots(payload)[0]
+    images = list(set(game['screenshots']))
+    images = random.choices(images,k=8 if len(images) > 8 else len(images))
+    screenshots = []
+    for index,image in enumerate(images):
+        if index==0:
+            screenshots.append(
+                InputMediaPhoto(image,caption=game['name'])
+            )
+        else:
+            screenshots.append(
+                InputMediaPhoto(image)
+            )
+    await client.send_media_group(
+        query.message.chat.id,
+        media=screenshots
+    )
+    await query.message.delete()
 
 if __name__ == "__main__":
     bot.run()
