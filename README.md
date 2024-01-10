@@ -77,3 +77,4 @@ This project is licensed under the [MIT License](LICENSE).
 ## Credits
 <a href="https://t.me/barryspace" class="btn">@barryspace</a>
 <a href="https://t.me/EverythingSuckz" class="btn">@EverythingSuckz</a>
+<a href="https://t.me/Qewertyy" class="btn">@Qewertyy</a>
