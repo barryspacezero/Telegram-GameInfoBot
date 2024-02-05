@@ -386,5 +386,16 @@ async def sendScreenshots(client: Client,query: CallbackQuery):
     )
     await query.message.delete()
 
+from flask import Flask
+
+app = Flask(__name__)
+
+@app.route('/')
+def status_ok():
+    return 'Ok', 200
+
+
 if __name__ == "__main__":
     bot.run()
+
+
