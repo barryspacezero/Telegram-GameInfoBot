@@ -1,5 +1,5 @@
 pyrogram==2.0.104
 requests
 flask
-threading
+thread
 python-dotenv
