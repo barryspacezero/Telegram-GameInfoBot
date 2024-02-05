@@ -36,7 +36,7 @@ async def id_command(client: Client, message: Message):
 
 
 def free()->list:
-    url=f"https://api.qewertyy.me/freegames"
+    url=f"https://api.qewertyy.dev/freegames"
     response=requests.get(url)
     if response.status_code != 200:
         print("failed to fetch data, Status code :", response.status_code)
