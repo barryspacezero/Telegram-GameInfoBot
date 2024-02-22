@@ -5,12 +5,14 @@ import json
 from datetime import datetime
 import random
 import threading
-
 import dotenv
 import logging
 from os import getenv
 
 dotenv.load_dotenv()
+
+Database = {}
+imageUrl = "https://images.igdb.com/igdb/image/upload/t_720p_2x/{}.jpg"
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("pyrogram").setLevel(logging.INFO)
@@ -330,16 +332,58 @@ def get_screenshots(payload: str) -> dict:
     result = response.json()
     print(json.dumps(result, indent=4, sort_keys=True))
     games = []
-    for ss in result:
-        if "screenshots" in ss:
-            obj = {
+    if "search" in payload:
+        for ss in result:
+            games.append( {
                     "id":ss['id'],
                     "name":ss['name']
-                }
-            if "where" in payload:
-                obj['screenshots'] = [f"https://images.igdb.com/igdb/image/upload/t_720p_2x/{i['image_id']}.jpg" for i in ss['screenshots']]
-            games.append(obj)
+                })
+    else:
+        games = result
     return games
+
+def paginate_screenshots(index: int, user_id: int,total: int) -> list:
+    btns = []
+    if index == 0:
+        btns.append(
+            [
+                InlineKeyboardButton(
+                    text="➡️",
+                    callback_data=f"ss.{index+1}.{user_id}"
+                )
+            ]
+        )
+    elif index == total-1:
+        btns.append(
+            [
+                InlineKeyboardButton(
+                    text="➡️",
+                    callback_data=f"ss.0.{user_id}"
+                )
+            ]
+        )
+    else:
+        btns.append(
+            [
+                InlineKeyboardButton(
+                    text="⬅️",
+                    callback_data=f"ss.{index-1}.{user_id}"
+                ),
+                InlineKeyboardButton(
+                    text="➡️",
+                    callback_data=f"ss.{index+1}.{user_id}"
+                )
+            ]
+        )
+    btns.append(
+            [
+                InlineKeyboardButton(
+                    text="Close",
+                    callback_data=f"ss.{-1}.{user_id}"
+                )
+            ]
+        )
+    return btns
 
 #function to get screenshots of a game to telegram from the json file
 @bot.on_message(filters.command("ss"))
@@ -357,45 +401,55 @@ async def screenshot_command(client: Client, message: Message):
     for i in results:
         buttons.append([InlineKeyboardButton(
             text=i['name'],
-            callback_data=f"ss.{i['id']}.{message.from_user.id}"
+            callback_data=f"ssgames.{i['id']}.{message.from_user.id}"
         )])
     await message.reply("Games Found:", disable_web_page_preview=False, reply_markup=InlineKeyboardMarkup(buttons))
 
-@bot.on_callback_query(filters.regex(r"^ss.(.*?)"))
-async def sendScreenshots(client: Client,query: CallbackQuery):
+@bot.on_callback_query(filters.regex(r"^ssgames.(.*?)"))
+async def sendBtns(client: Client,query: CallbackQuery):
     data = query.data.split('.')
-    if int(data[-1]) != query.from_user.id:
+    user_id = int(data[-1])
+    if user_id != query.from_user.id:
         return await query.answer("Not for you!",show_alert=True)
     gameId = data[1]
     payload = f"fields id,name,screenshots.image_id; where id={gameId};"
-    game = get_screenshots(payload)[0]
-    images = list(set(game['screenshots']))
-    images = random.choices(images,k=8 if len(images) > 8 else len(images))
-    screenshots = []
-    for index,image in enumerate(images):
-        if index==0:
-            screenshots.append(
-                InputMediaPhoto(image,caption=game['name'])
-            )
-        else:
-            screenshots.append(
-                InputMediaPhoto(image)
-            )
-    await client.send_media_group(
+    game = get_screenshots(payload)
+    if not game:
+        await query.answer("No game found!")
+        await query.message.delete()
+        return
+    game = game[0]
+    Database[user_id] = game
+    btns = paginate_screenshots(0,user_id,len(game['screenshots']))
+    await client.send_photo(
         query.message.chat.id,
-        media=screenshots
+        photo=imageUrl.format(game['screenshots'][0]['image_id']),
+        reply_markup=InlineKeyboardMarkup(btns)
     )
     await query.message.delete()
 
-threading.Thread(target = lambda: bot.run(host='0.0.0.0', port=8000, debug=True, use_reloader=False)).start()
-
-from flask import Flask
-
-app = Flask(__name__)
-
-@app.route('/')
-def status_ok():
-    return 'Ok', 200
+@bot.on_callback_query(filters.regex(r"^ss.(.*?)"))
+async def sendScreenshot(client: Client,query: CallbackQuery):
+    data = query.data.split('.')
+    user_id = int(data[-1])
+    if user_id != query.from_user.id:
+        return await query.answer("Not for you!",show_alert=True)
+    index = int(data[1])
+    if index == -1:
+        del Database[user_id]
+        return await query.message.delete()
+    game = Database.get(user_id,None)
+    if game is None:
+        return await query.message.delete()
+    imageId = game['screenshots'][index]['image_id']
+    btns = paginate_screenshots(
+        index,user_id,len(game['screenshots'])
+    )
+    await query.edit_message_media(
+        media=InputMediaPhoto(media=imageUrl.format(imageId)),
+        reply_markup=InlineKeyboardMarkup(btns)
+    )
+    return
 
 
 if __name__ == "__main__":
