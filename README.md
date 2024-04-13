@@ -56,6 +56,9 @@ pip install -r requirements.txt
   API_ID=your_telegram_api_id
   API_HASH=your_telegram_api_hash
   BOT_TOKEN=your_telegram_bot_token
+  REDIS_PASSWORD=password
+  REDIS_PORT=port
+  REDIS_HOST=host
   ```
 
 5. Run the bot:
