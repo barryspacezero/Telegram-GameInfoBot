@@ -307,7 +307,7 @@ def get_art(game: str) -> dict:
     return art
 
 #function to get artworks of a game to telegram from the json file
-#@bot.on_message(filters.command("art"))
+@bot.on_message(filters.command("art"))
 async def art_command(client: Client, message: Message):
     if len(message.text.split()) <= 1:
         await message.reply("You gotta enter a game name!")
