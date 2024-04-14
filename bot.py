@@ -1,18 +1,25 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message,CallbackQuery,InlineKeyboardMarkup, InlineKeyboardButton, InputMediaPhoto
-import requests
-import json
+import requests,io
+import json,sys
 from datetime import datetime
 import random
-import threading
+import traceback
 import dotenv
 import logging
 from os import getenv
+import redis
+from constants import *
 
 dotenv.load_dotenv()
+REDIS = redis.Redis(host=getenv("REDIS_HOST"), port=int(getenv("REDIS_PORT")),password=getenv("REDIS_PASSWORD"), decode_responses=True)
+try:
+    REDIS.ping()
+except Exception:
+    traceback.print_exc()
+    sys.exit(0)
 
 Database = {}
-imageUrl = "https://images.igdb.com/igdb/image/upload/t_720p_2x/{}.jpg"
 
 logging.basicConfig(level=logging.INFO)
 logging.getLogger("pyrogram").setLevel(logging.INFO)
@@ -58,7 +65,7 @@ def free()->list:
             games.append(game)
     return games
 
-@bot.on_message(filters.command("free"))
+#@bot.on_message(filters.command("free"))
 async def free_command(client: Client, message: Message):
     result = free()
     if not result:
@@ -451,8 +458,92 @@ async def sendScreenshot(client: Client,query: CallbackQuery):
     )
     return
 
+def getUserInfo(username):
+    url = f"https://backloggd-api.vercel.app/user/{username}"
+    response = requests.get(url)
+    if response.status_code == 404:
+        return 404
+    if response.status_code != 200:
+        print("failed to fetch data, Status code :", response.status_code)
+        return None
+    data = response.json()
+    print(json.dumps(data,sort_keys=True, indent=2))
+    return data['content']
+
+def setBackloggdUsername(userId,username):
+    REDIS.set(userId,username)
+
+def getBackloggdUsername(userId):
+    return REDIS.get(userId)
+
+def userExists(userId):
+    return REDIS.get(userId) is not None
+
+def formatLastKeys(data):
+    last3Items = list(data.items())[-3:]
+    return "\n".join([f"**{key}**: `{value}`" for key, value in last3Items])
+
+def createFlexMmessage(data):
+    favorite_games = ", ".join([i['name'] for i in data['favoriteGames']] if len(data['favoriteGames']) > 0 else ["No favorite games found."])
+    recently_played_games = ", ".join([i['name'] for i in data['recentlyPlayed']] if len(data['recentlyPlayed']) > 0 else ["No games played recently."])
+    lastItems = formatLastKeys(data)
+    message = flexMessage.format(
+        username=data['username'],
+        bio=data['bio'],
+        favorite_games=favorite_games,
+        recently_played_games=recently_played_games,
+        remaining_info=lastItems
+    )
+    return message
+
+def getImageContent(image_url):
+    response = requests.get(image_url)
+    if response.status_code != 200:
+        print("failed to fetch data, Status code :", response.status_code)
+        return None
+    return response.content
+
+@bot.on_message(filters.command(["uname","username"]))
+async def setUsername(client: Client, message: Message):
+    if len(message.text.split()) <= 1:
+        await message.reply("You gotta enter a username!")
+        return
+    username = message.text.split(maxsplit=1)[1]
+    if (userExists(message.from_user.id)):
+        await message.reply("Username already set!, you can use /change to change it.")
+        return
+    setBackloggdUsername(message.from_user.id,username)
+    await message.reply("Username set successfully!")
+
+@bot.on_message(filters.command(["change"]))
+async def changeUsername(client: Client, message: Message):
+    if len(message.text.split()) <= 1:
+        await message.reply("You gotta enter a username!")
+        return
+    username = message.text.split(maxsplit=1)[1]
+    if not (userExists(message.from_user.id)):
+        await message.reply("Username not set!, you can use /uname to set it.")
+        return
+    setBackloggdUsername(message.from_user.id,username)
+    await message.reply("Username changed successfully!")
+
+@bot.on_message(filters.command("flex"))
+async def flex(client: Client, message: Message):
+    if not userExists(message.from_user.id):
+        await message.reply("You gotta set your username by using /uname")
+        return
+    username = getBackloggdUsername(message.from_user.id)
+    data = getUserInfo(username)
+    if data == 404:
+        await message.reply("User not found!")
+        return
+    elif not data:
+        return
+    image = getImageContent(data['profile'])
+    text = createFlexMmessage(data)
+    await message.reply_photo(io.BytesIO(image), caption=text)
+    return
+
 
 if __name__ == "__main__":
     bot.run()
-
-
